@@ -5,10 +5,10 @@ import (
 	"go_gin_template/middlewares"
 	"go_gin_template/service"
 	"io"
+	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
-	gindump "github.com/tpkeeper/gin-dump"
 )
 
 var (
@@ -35,14 +35,24 @@ func main() {
 	server.Use(gin.Recovery(),
 		middlewares.Logger(),
 		middlewares.BasicAuth(),
-		gindump.Dump())
+		// Debug mode
+		//===================================
+		// gindump.Dump()
+		//===================================
+	)
 
 	server.GET("/videos", func(ctx *gin.Context) {
-		ctx.JSON(200, VideoController.FindAll())
+		ctx.JSON(http.StatusOK, VideoController.FindAll())
 	})
 
 	server.POST("/videos", func(ctx *gin.Context) {
-		ctx.JSON(200, VideoController.Save(ctx))
+		err := VideoController.Save(ctx)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		} else {
+			ctx.JSON(http.StatusOK, gin.H{"message": "video input is valid"})
+		}
+
 	})
 
 	server.Run(":8080")
